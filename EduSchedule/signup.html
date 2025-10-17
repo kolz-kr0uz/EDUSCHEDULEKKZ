@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-blue: #3498db;
+            --dark-blue: #2980b9;
+            --light-blue: #5dade2;
+            --gradient-primary: linear-gradient(135deg, #3498db, #2c3e50);
+            --gradient-secondary: linear-gradient(135deg, #5dade2, #3498db);
+            --gradient-light: linear-gradient(135deg, #e8f4fc, #d6eaf8);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--gradient-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .registration-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 900px;
+            margin: 30px auto;
+        }
+        
+        .registration-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .registration-header h1 {
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .registration-header p {
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        
+        .registration-form {
+            padding: 40px;
+        }
+        
+        .user-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .user-type-card {
+            flex: 1;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .user-type-card:hover {
+            border-color: var(--light-blue);
+            transform: translateY(-5px);
+        }
+        
+        .user-type-card.selected {
+            border-color: var(--primary-blue);
+            background: var(--gradient-light);
+        }
+        
+        .user-icon {
+            font-size: 40px;
+            color: var(--primary-blue);
+            margin-bottom: 15px;
+        }
+        
+        .form-section {
+            display: none;
+        }
+        
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-control {
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .btn-primary {
+            background: var(--gradient-secondary);
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #6c757d;
+        }
+        
+        .login-link a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .password-strength {
+            height: 5px;
+            border-radius: 5px;
+            margin-top: 5px;
+            background: #e9ecef;
+            overflow: hidden;
+        }
+        
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s ease;
+        }
+        
+        .password-weak {
+            background: #e74c3c;
+            width: 33%;
+        }
+        
+        .password-medium {
+            background: #f39c12;
+            width: 66%;
+        }
+        
+        .password-strong {
+            background: #2ecc71;
+            width: 100%;
+        }
+        
+        .password-hints {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="registration-container">
+            <div class="registration-header">
+                <h1><i class="bi bi-journal-check me-2"></i>Регистрация в EduSchedule</h1>
+                <p>Присоединяйтесь к нашему сервису умного расписания для школьников</p>
+            </div>
+            
+            <div class="registration-form">
+                <!-- Выбор типа пользователя -->
+                <div class="user-type-selector">
+                    <div class="user-type-card" data-user-type="student">
+                        <div class="user-icon">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <h4>Ученик</h4>
+                        <p>Доступ к расписанию и домашним заданиям</p>
+                    </div>
+                    <div class="user-type-card" data-user-type="teacher">
+                        <div class="user-icon">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h4>Учитель</h4>
+                        <p>Управление расписанием и заданиями</p>
+                    </div>
+                </div>
+
+                
+                
+                <!-- Форма для ученика -->
+                <form id="studentForm" class="form-section" method="POST" action="signup.php">
+                    <input type="hidden" name="role" value="student">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="studentFullName" class="form-label">ФИО</label>
+                            <input type="text" class="form-control" id="studentFullName" name="fullname" placeholder="Иванов Иван Иванович" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="studentEmail" class="form-label">Электронная почта</label>
+                            <input type="email" class="form-control" id="studentEmail" name="email" placeholder="example@mail.ru" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="studentClass" class="form-label">Класс</label>
+                            <select class="form-select" id="studentClass" name="class" required>
+                                <option value="" selected disabled>Выберите класс</option>
+                                <option value="1">1 класс</option>
+                                <option value="2">2 класс</option>
+                                <option value="3">3 класс</option>
+                                <option value="4">4 класс</option>
+                                <option value="5">5 класс</option>
+                                <option value="6">6 класс</option>
+                                <option value="7">7 класс</option>
+                                <option value="8">8 класс</option>
+                                <option value="9">9 класс</option>
+                                <option value="10">10 класс</option>
+                                <option value="11">11 класс</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="studentLetter" class="form-label">Буква класса</label>
+                            <select class="form-select" id="studentLetter" name="class_letter" required>
+                                <option value="" selected disabled>Выберите букву</option>
+                                <option value="А">А</option>
+                                <option value="Б">Б</option>
+                                <option value="В">В</option>
+                                <option value="Г">Г</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="studentLogin" class="form-label">Логин</label>
+                            <input type="text" class="form-control" id="studentLogin" name="login" placeholder="Придумайте логин" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="studentPassword" class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="studentPassword" name="password" placeholder="Придумайте пароль" required>
+                            <div class="password-strength">
+                                <div class="password-strength-bar" id="studentPasswordStrength"></div>
+                            </div>
+                            <div class="password-hints">
+                                Пароль должен содержать не менее 8 символов, включая цифры и буквы
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Зарегистрироваться как ученик</button>
+                    </div>
+                </form>
+
+                <!-- Форма для учителя -->
+                <form id="teacherForm" class="form-section" method="POST" action="signup.php">
+                    <input type="hidden" name="role" value="teacher">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="teacherFullName" class="form-label">ФИО</label>
+                            <input type="text" class="form-control" id="teacherFullName" name="fullname" placeholder="Иванова Мария Петровна" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="teacherEmail" class="form-label">Электронная почта</label>
+                            <input type="email" class="form-control" id="teacherEmail" name="email" placeholder="example@mail.ru" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="teacherSubject" class="form-label">Предмет</label>
+                            <select class="form-select" id="teacherSubject" name="subject" required>
+                                <option value="" selected disabled>Выберите предмет</option>
+                                <option value="Русский язык">Русский язык</option>
+                                <option value="Английский язык">Английский язык</option>
+                                <option value="Математика">Математика</option>
+                                <option value="Информатика">Информатика</option>
+                                <option value="История">История</option>
+                                <option value="Обществознание">Обществознание</option>
+                                <option value="Физическая культура">Физическая культура</option>
+                                <option value="Физика">Физика</option>
+                                <option value="Химия">Химия</option>
+                                <option value="Биология">Биология</option>
+                                <option value="География">География</option>
+                                <option value="Литература">Литература</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="teacherLogin" class="form-label">Логин</label>
+                            <input type="text" class="form-control" id="teacherLogin" name="login" placeholder="Придумайте логин" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="teacherPassword" class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="teacherPassword" name="password" placeholder="Придумайте пароль" required>
+                            <div class="password-strength">
+                                <div class="password-strength-bar" id="teacherPasswordStrength"></div>
+                            </div>
+                            <div class="password-hints">
+                                Пароль должен содержать не менее 8 символов, включая цифры и буквы
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Зарегистрироваться как учитель</button>
+                    </div>
+                </form>
+                
+                <div class="login-link">
+                    Уже есть аккаунт? <a href="login.html">Войдите здесь</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userTypeCards = document.querySelectorAll('.user-type-card');
+            const studentForm = document.getElementById('studentForm');
+            const teacherForm = document.getElementById('teacherForm');
+            const studentPassword = document.getElementById('studentPassword');
+            const teacherPassword = document.getElementById('teacherPassword');
+            const studentPasswordStrength = document.getElementById('studentPasswordStrength');
+            const teacherPasswordStrength = document.getElementById('teacherPasswordStrength');
+            
+            // Выбор типа пользователя
+            userTypeCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Убираем выделение со всех карточек
+                    userTypeCards.forEach(c => c.classList.remove('selected'));
+
+                    // Выделяем выбранную карточку
+                    this.classList.add('selected');
+
+                    // Показываем соответствующую форму
+                    const userType = this.getAttribute('data-user-type');
+                    if (userType === 'student') {
+                        studentForm.classList.add('active');
+                        teacherForm.classList.remove('active');
+
+                        // Устанавливаем значение hidden поля role
+                        studentForm.querySelector('input[name="role"]').value = 'student';
+                    } else {
+                        teacherForm.classList.add('active');
+                        studentForm.classList.remove('active');
+
+                        // Устанавливаем значение hidden поля role
+                        teacherForm.querySelector('input[name="role"]').value = 'teacher';
+                    }
+                });
+            });
+            
+            // По умолчанию выбираем ученика
+            document.querySelector('.user-type-card[data-user-type="student"]').click();
+            
+            // Функция проверки сложности пароля
+            function checkPasswordStrength(password, strengthBar) {
+                let strength = 0;
+                
+                if (password.length >= 8) strength++;
+                if (password.match(/[a-zа-я]/) && password.match(/[A-ZА-Я]/)) strength++;
+                if (password.match(/\d/)) strength++;
+                if (password.match(/[^a-zA-Zа-яА-Я\d]/)) strength++;
+                
+                // Сброс индикатора
+                strengthBar.className = 'password-strength-bar';
+                
+                // Установка класса в зависимости от силы пароля
+                if (strength > 0) {
+                    if (strength <= 2) {
+                        strengthBar.classList.add('password-weak');
+                    } else if (strength === 3) {
+                        strengthBar.classList.add('password-medium');
+                    } else {
+                        strengthBar.classList.add('password-strong');
+                    }
+                }
+            }
+            
+            // Обработчики для проверки пароля
+            studentPassword.addEventListener('input', function() {
+                checkPasswordStrength(this.value, studentPasswordStrength);
+            });
+            
+            teacherPassword.addEventListener('input', function() {
+                checkPasswordStrength(this.value, teacherPasswordStrength);
+            });
+            
+            // Обработчики отправки форм
+            studentForm.addEventListener('submit', function(e) {
+            });
+            
+            teacherForm.addEventListener('submit', function(e) {
+            });
+        });
+    </script>
+</body>
+</html>

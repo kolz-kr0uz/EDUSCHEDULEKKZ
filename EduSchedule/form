@@ -1,0 +1,65 @@
+<!-- Форма для ученика123 -->
+                <form id="studentForm" class="form-section" method="POST" action="signup.php">
+                    <input type="hidden" name="role" value="student">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="studentFullName" class="form-label">ФИО</label>
+                            <input type="text" class="form-control" id="studentFullName" name="fullname" placeholder="Иванов Иван Иванович" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="studentEmail" class="form-label">Электронная почта</label>
+                            <input type="email" class="form-control" id="studentEmail" name="email" placeholder="example@mail.ru" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="studentClass" class="form-label">Класс</label>
+                            <select class="form-select" id="studentClass" name="class" required>
+                                <option value="" selected disabled>Выберите класс</option>
+                                <option value="1">1 класс</option>
+                                <option value="2">2 класс</option>
+                                <option value="3">3 класс</option>
+                                <option value="4">4 класс</option>
+                                <option value="5">5 класс</option>
+                                <option value="6">6 класс</option>
+                                <option value="7">7 класс</option>
+                                <option value="8">8 класс</option>
+                                <option value="9">9 класс</option>
+                                <option value="10">10 класс</option>
+                                <option value="11">11 класс</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="studentLetter" class="form-label">Буква класса</label>
+                            <select class="form-select" id="studentLetter" name="class_letter" required>
+                                <option value="" selected disabled>Выберите букву</option>
+                                <option value="А">А</option>
+                                <option value="Б">Б</option>
+                                <option value="В">В</option>
+                                <option value="Г">Г</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="studentLogin" class="form-label">Логин</label>
+                            <input type="text" class="form-control" id="studentLogin" name="login" placeholder="Придумайте логин" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="studentPassword" class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="studentPassword" name="password" placeholder="Придумайте пароль" required>
+                            <div class="password-strength">
+                                <div class="password-strength-bar" id="studentPasswordStrength"></div>
+                            </div>
+                            <div class="password-hints">
+                                Пароль должен содержать не менее 8 символов, включая цифры и буквы
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Зарегистрироваться как ученик</button>
+                    </div>
+                </form>
