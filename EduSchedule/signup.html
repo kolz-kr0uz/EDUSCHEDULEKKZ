@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Регистрация - EduSchedule</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         :root {
@@ -147,41 +147,6 @@
         .login-link a:hover {
             text-decoration: underline;
         }
-        
-        .password-strength {
-            height: 5px;
-            border-radius: 5px;
-            margin-top: 5px;
-            background: #e9ecef;
-            overflow: hidden;
-        }
-        
-        .password-strength-bar {
-            height: 100%;
-            width: 0;
-            transition: width 0.3s ease;
-        }
-        
-        .password-weak {
-            background: #e74c3c;
-            width: 33%;
-        }
-        
-        .password-medium {
-            background: #f39c12;
-            width: 66%;
-        }
-        
-        .password-strong {
-            background: #2ecc71;
-            width: 100%;
-        }
-        
-        .password-hints {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-top: 5px;
-        }
     </style>
 </head>
 <body>
@@ -189,7 +154,7 @@
         <div class="registration-container">
             <div class="registration-header">
                 <h1><i class="bi bi-journal-check me-2"></i>Регистрация в EduSchedule</h1>
-                <p>Присоединяйтесь к нашему сервису умного расписания для школьников</p>
+                <p>Присоединяйтесь к нашему сервису расписания колледжа</p>
             </div>
             
             <div class="registration-form">
@@ -199,21 +164,19 @@
                         <div class="user-icon">
                             <i class="bi bi-person"></i>
                         </div>
-                        <h4>Ученик</h4>
-                        <p>Доступ к расписанию и домашним заданиям</p>
+                        <h4>Студент</h4>
+                        <p>Доступ к расписанию своей группы</p>
                     </div>
                     <div class="user-type-card" data-user-type="teacher">
                         <div class="user-icon">
                             <i class="bi bi-person-badge"></i>
                         </div>
-                        <h4>Учитель</h4>
-                        <p>Управление расписанием и заданиями</p>
+                        <h4>Преподаватель</h4>
+                        <p>Доступ после подтверждения администратором</p>
                     </div>
                 </div>
-
                 
-                
-                <!-- Форма для ученика -->
+                <!-- Форма для студента -->
                 <form id="studentForm" class="form-section" method="POST" action="signup.php">
                     <input type="hidden" name="role" value="student">
                     <div class="row mb-3">
@@ -229,25 +192,14 @@
                             <input type="email" class="form-control" id="studentEmail" name="email" placeholder="example@mail.ru" required>
                         </div>
                         <div class="col-md-3">
-                            <label for="studentClass" class="form-label">Класс</label>
-                            <select class="form-select" id="studentClass" name="class" required>
-                                <option value="" selected disabled>Выберите класс</option>
-                                <option value="1">1 класс</option>
-                                <option value="2">2 класс</option>
-                                <option value="3">3 класс</option>
-                                <option value="4">4 класс</option>
-                                <option value="5">5 класс</option>
-                                <option value="6">6 класс</option>
-                                <option value="7">7 класс</option>
-                                <option value="8">8 класс</option>
-                                <option value="9">9 класс</option>
-                                <option value="10">10 класс</option>
-                                <option value="11">11 класс</option>
+                            <label for="studentFaculty" class="form-label">Группа</label>
+                            <select class="form-select" id="studentFaculty" name="faculty_id" required>
+                                <option value="" selected disabled>Выберите группу</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label for="studentLetter" class="form-label">Буква класса</label>
-                            <select class="form-select" id="studentLetter" name="class_letter" required>
+                            <label for="studentLetter" class="form-label">Буква группы</label>
+                            <select class="form-select" id="studentLetter" name="group_letter" required>
                                 <option value="" selected disabled>Выберите букву</option>
                                 <option value="А">А</option>
                                 <option value="Б">Б</option>
@@ -265,21 +217,15 @@
                         <div class="col-md-6">
                             <label for="studentPassword" class="form-label">Пароль</label>
                             <input type="password" class="form-control" id="studentPassword" name="password" placeholder="Придумайте пароль" required>
-                            <div class="password-strength">
-                                <div class="password-strength-bar" id="studentPasswordStrength"></div>
-                            </div>
-                            <div class="password-hints">
-                                Пароль должен содержать не менее 8 символов, включая цифры и буквы
-                            </div>
                         </div>
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Зарегистрироваться как ученик</button>
+                        <button type="submit" class="btn btn-primary">Зарегистрироваться как студент</button>
                     </div>
                 </form>
 
-                <!-- Форма для учителя -->
+                <!-- Форма для преподавателя -->
                 <form id="teacherForm" class="form-section" method="POST" action="signup.php">
                     <input type="hidden" name="role" value="teacher">
                     <div class="row mb-3">
@@ -295,44 +241,25 @@
                             <input type="email" class="form-control" id="teacherEmail" name="email" placeholder="example@mail.ru" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="teacherSubject" class="form-label">Предмет</label>
-                            <select class="form-select" id="teacherSubject" name="subject" required>
-                                <option value="" selected disabled>Выберите предмет</option>
-                                <option value="Русский язык">Русский язык</option>
-                                <option value="Английский язык">Английский язык</option>
-                                <option value="Математика">Математика</option>
-                                <option value="Информатика">Информатика</option>
-                                <option value="История">История</option>
-                                <option value="Обществознание">Обществознание</option>
-                                <option value="Физическая культура">Физическая культура</option>
-                                <option value="Физика">Физика</option>
-                                <option value="Химия">Химия</option>
-                                <option value="Биология">Биология</option>
-                                <option value="География">География</option>
-                                <option value="Литература">Литература</option>
-                            </select>
+                            <label for="teacherLogin" class="form-label">Логин</label>
+                            <input type="text" class="form-control" id="teacherLogin" name="login" placeholder="Придумайте логин" required>
                         </div>
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="teacherLogin" class="form-label">Логин</label>
-                            <input type="text" class="form-control" id="teacherLogin" name="login" placeholder="Придумайте логин" required>
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="teacherPassword" class="form-label">Пароль</label>
                             <input type="password" class="form-control" id="teacherPassword" name="password" placeholder="Придумайте пароль" required>
-                            <div class="password-strength">
-                                <div class="password-strength-bar" id="teacherPasswordStrength"></div>
-                            </div>
-                            <div class="password-hints">
-                                Пароль должен содержать не менее 8 символов, включая цифры и буквы
-                            </div>
                         </div>
                     </div>
 
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        Ваш аккаунт будет активирован после подтверждения администратором
+                    </div>
+
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Зарегистрироваться как учитель</button>
+                        <button type="submit" class="btn btn-primary">Зарегистрироваться как преподаватель</button>
                     </div>
                 </form>
                 
@@ -343,7 +270,6 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
@@ -351,80 +277,42 @@
             const userTypeCards = document.querySelectorAll('.user-type-card');
             const studentForm = document.getElementById('studentForm');
             const teacherForm = document.getElementById('teacherForm');
-            const studentPassword = document.getElementById('studentPassword');
-            const teacherPassword = document.getElementById('teacherPassword');
-            const studentPasswordStrength = document.getElementById('studentPasswordStrength');
-            const teacherPasswordStrength = document.getElementById('teacherPasswordStrength');
             
             // Выбор типа пользователя
             userTypeCards.forEach(card => {
                 card.addEventListener('click', function() {
-                    // Убираем выделение со всех карточек
                     userTypeCards.forEach(c => c.classList.remove('selected'));
-
-                    // Выделяем выбранную карточку
                     this.classList.add('selected');
 
-                    // Показываем соответствующую форму
                     const userType = this.getAttribute('data-user-type');
                     if (userType === 'student') {
                         studentForm.classList.add('active');
                         teacherForm.classList.remove('active');
-
-                        // Устанавливаем значение hidden поля role
                         studentForm.querySelector('input[name="role"]').value = 'student';
                     } else {
                         teacherForm.classList.add('active');
                         studentForm.classList.remove('active');
-
-                        // Устанавливаем значение hidden поля role
                         teacherForm.querySelector('input[name="role"]').value = 'teacher';
                     }
                 });
             });
             
-            // По умолчанию выбираем ученика
+            // По умолчанию выбираем студента
             document.querySelector('.user-type-card[data-user-type="student"]').click();
             
-            // Функция проверки сложности пароля
-            function checkPasswordStrength(password, strengthBar) {
-                let strength = 0;
-                
-                if (password.length >= 8) strength++;
-                if (password.match(/[a-zа-я]/) && password.match(/[A-ZА-Я]/)) strength++;
-                if (password.match(/\d/)) strength++;
-                if (password.match(/[^a-zA-Zа-яА-Я\d]/)) strength++;
-                
-                // Сброс индикатора
-                strengthBar.className = 'password-strength-bar';
-                
-                // Установка класса в зависимости от силы пароля
-                if (strength > 0) {
-                    if (strength <= 2) {
-                        strengthBar.classList.add('password-weak');
-                    } else if (strength === 3) {
-                        strengthBar.classList.add('password-medium');
-                    } else {
-                        strengthBar.classList.add('password-strong');
-                    }
-                }
-            }
-            
-            // Обработчики для проверки пароля
-            studentPassword.addEventListener('input', function() {
-                checkPasswordStrength(this.value, studentPasswordStrength);
-            });
-            
-            teacherPassword.addEventListener('input', function() {
-                checkPasswordStrength(this.value, teacherPasswordStrength);
-            });
-            
-            // Обработчики отправки форм
-            studentForm.addEventListener('submit', function(e) {
-            });
-            
-            teacherForm.addEventListener('submit', function(e) {
-            });
+            // Загружаем список групп
+            fetch('get_faculties.php')
+                .then(response => response.json())
+                .then(faculties => {
+                    const select = document.getElementById('studentFaculty');
+                    faculties.forEach(faculty => {
+                        const option = document.createElement('option');
+                        option.value = faculty.id;
+                        option.textContent = faculty.name + ' - ' + faculty.full_name;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Ошибка загрузки групп:', error));
         });
     </script>
 </body>

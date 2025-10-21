@@ -9,28 +9,35 @@ $email = trim($_POST['email']);
 $login = trim($_POST['login']);
 $pass = trim($_POST['password']);
 
-// Формируем class_info для учеников
+// Для студентов получаем faculty_id и group_letter
 if ($role == 'student') {
-    $class = trim($_POST['class']);
-    $class_letter = trim($_POST['class_letter']);
-    $class_info = $class . $class_letter;
-    $subject = NULL;
+    $faculty_id = trim($_POST['faculty_id']);
+    $group_letter = trim($_POST['group_letter']);
+    $is_approved = TRUE; // Студентов подтверждаем сразу
 } else {
-    $subject = trim($_POST['subject']);
-    $class_info = NULL;
+    $faculty_id = NULL;
+    $group_letter = NULL;
+    $is_approved = FALSE; // Преподавателей нужно подтверждать
 }
 
 // Проверка заполнения обязательных полей
 if (empty($login) || empty($pass) || empty($fullname) || empty($email) || empty($role)) {
     $_SESSION['msg'] = 'Заполните все обязательные поля';
-    header('location: signup.php');
+    header('location: signup.html');
+    exit;
+}
+
+// Для студентов проверяем что группа и буква выбраны
+if ($role == 'student' && (empty($faculty_id) || empty($group_letter))) {
+    $_SESSION['msg'] = 'Выберите группу и букву группы';
+    header('location: signup.html');
     exit;
 }
 
 // Проверка email
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $_SESSION['msg'] = 'Некорректный формат email';
-    header('location: signup.php');
+    header('location: signup.html');
     exit;
 }
 
@@ -42,7 +49,7 @@ $stmt->store_result();
 
 if ($stmt->num_rows > 0) {
     $_SESSION['msg'] = 'Данный логин занят';
-    header('location: signup.php');
+    header('location: signup.html');
     exit;
 }
 
@@ -54,7 +61,7 @@ $stmt->store_result();
 
 if ($stmt->num_rows > 0) {
     $_SESSION['msg'] = 'Данный email уже зарегистрирован';
-    header('location: signup.php');
+    header('location: signup.html');
     exit;
 }
 
@@ -62,12 +69,15 @@ if ($stmt->num_rows > 0) {
 $hashed_password = password_hash($pass, PASSWORD_DEFAULT);
 
 // Вставка данных в базу
-$stmt = $conn->prepare("INSERT INTO users (role, fullname, email, login, password, class_info, subject) VALUES (?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param('sssssss', $role, $fullname, $email, $login, $hashed_password, $class_info, $subject);
+$stmt = $conn->prepare("INSERT INTO users (role, fullname, email, login, password, faculty_id, group_letter, is_approved) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param('sssssisi', $role, $fullname, $email, $login, $hashed_password, $faculty_id, $group_letter, $is_approved);
 
 if ($stmt->execute()) {
-    // Успешная регистрация - показываем страницу с уведомлением
-    $success_message = "Вы успешно зарегистрированы! Через 10 секунд вы будете перенаправлены на страницу входа.";
+    if ($role == 'student') {
+        $success_message = "Вы успешно зарегистрированы как студент! Через 10 секунд вы будете перенаправлены на страницу входа.";
+    } else {
+        $success_message = "Вы успешно зарегистрированы как преподаватель! Ваш аккаунт будет активирован после подтверждения администратором.";
+    }
 } else {
     $success_message = "Ошибка регистрации: " . $conn->error;
 }
@@ -81,16 +91,13 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация успешна</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Регистрация успешна - EduSchedule</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         :root {
             --primary-blue: #3498db;
-            --dark-blue: #2980b9;
-            --light-blue: #5dade2;
             --gradient-primary: linear-gradient(135deg, #3498db, #2c3e50);
-            --gradient-secondary: linear-gradient(135deg, #5dade2, #3498db);
         }
         
         body {
@@ -148,7 +155,7 @@ $conn->close();
     </div>
 
     <script>
-        let seconds = 5;
+        let seconds = 10;
         const countdownElement = document.getElementById('countdown');
         const countdownInterval = setInterval(function() {
             seconds--;

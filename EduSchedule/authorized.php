@@ -9,7 +9,7 @@ if (!isset($_SESSION['user'])) {
 }
 
 $user = $_SESSION['user'];
-$current_week = isset($_GET['week']) ? $_GET['week'] : date('W'); // Текущая неделя
+$current_week = isset($_GET['week']) ? $_GET['week'] : date('W');
 $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
 
 // Получаем даты для текущей недели
@@ -18,7 +18,7 @@ function getWeekDates($year, $week) {
     $first_day = new DateTime();
     $first_day->setISODate($year, $week);
     
-    for ($i = 0; $i < 6; $i++) { // Только понедельник-суббота
+    for ($i = 0; $i < 6; $i++) {
         $date = clone $first_day;
         $date->modify("+$i days");
         $dates[] = $date->format('Y-m-d');
@@ -26,42 +26,47 @@ function getWeekDates($year, $week) {
     return $dates;
 }
 
-$week_dates = getWeekDates($current_year, $current_week);
+// Получаем расписание только если пользователь подтвержден или это студент
+$schedule_data = [];
+$show_schedule = true;
 
-// Получаем расписание в зависимости от роли
-if ($user['role'] == 'student') {
-    // Для ученика - расписание его класса
-    $schedule_data = [];
-    foreach ($week_dates as $date) {
-        $stmt = $conn->prepare("
-            SELECT s.*, u.fullname as teacher_name 
-            FROM schedule s 
-            LEFT JOIN users u ON s.teacher_id = u.id 
-            WHERE s.date = ? AND s.class_info = ? 
-            ORDER BY s.lesson_number
-        ");
-        $stmt->bind_param('ss', $date, $user['class_info']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $schedule_data[$date] = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-    }
+if ($user['role'] == 'teacher' && !$user['is_approved']) {
+    $show_schedule = false;
 } else {
-    // Для учителя - уроки которые он ведет
-    $schedule_data = [];
-    foreach ($week_dates as $date) {
-        $stmt = $conn->prepare("
-            SELECT s.*, u.fullname as teacher_name 
-            FROM schedule s 
-            LEFT JOIN users u ON s.teacher_id = u.id 
-            WHERE s.date = ? AND s.teacher_id = ? 
-            ORDER BY s.lesson_number
-        ");
-        $stmt->bind_param('si', $date, $user['id']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $schedule_data[$date] = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+    if ($user['role'] == 'student') {
+        // Для студента - расписание его группы
+        foreach (getWeekDates($current_year, $current_week) as $date) {
+            $stmt = $conn->prepare("
+                SELECT s.*, u.fullname as teacher_name, f.name as faculty_name 
+                FROM schedule s 
+                LEFT JOIN users u ON s.teacher_id = u.id 
+                LEFT JOIN faculty f ON s.faculty_id = f.id 
+                WHERE s.date = ? AND s.faculty_id = ? 
+                ORDER BY s.lesson_number
+            ");
+            $stmt->bind_param('si', $date, $user['faculty_id']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $schedule_data[$date] = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+        }
+    } else {
+        // Для преподавателя - уроки которые он ведет
+        foreach (getWeekDates($current_year, $current_week) as $date) {
+            $stmt = $conn->prepare("
+                SELECT s.*, u.fullname as teacher_name, f.name as faculty_name 
+                FROM schedule s 
+                LEFT JOIN users u ON s.teacher_id = u.id 
+                LEFT JOIN faculty f ON s.faculty_id = f.id 
+                WHERE s.date = ? AND s.teacher_id = ? 
+                ORDER BY s.lesson_number
+            ");
+            $stmt->bind_param('si', $date, $user['id']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $schedule_data[$date] = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+        }
     }
 }
 
@@ -101,18 +106,24 @@ function getLessonTime($number) {
         5 => '12:25-13:10',
         6 => '13:15-14:00',
         7 => '14:05-14:50',
-        8 => '14:55-15:40'
+        8 => '14:55-15:40',
+        9 => '16:05-16:50',
+        10 => '16:55-17:40',
+        11 => '17:45-18:30',
+        12 => '18:35-19:20'
     ];
     return $times[$number] ?? '';
 }
+
+$week_dates = getWeekDates($current_year, $current_week);
 ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Моё расписание</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Моё расписание - EduSchedule</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         :root {
@@ -161,7 +172,7 @@ function getLessonTime($number) {
             background: white;
             border-radius: 15px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            overflow: hidden;
+            overflow-x: auto;
         }
         
         .schedule-header {
@@ -170,70 +181,31 @@ function getLessonTime($number) {
             border-bottom: 1px solid #dee2e6;
         }
         
-        .day-column {
-            min-height: 600px;
-            border-right: 1px solid #dee2e6;
-        }
-        
-        .day-column:last-child {
-            border-right: none;
-        }
-        
         .day-header {
             background: var(--primary-blue);
             color: white;
             padding: 15px;
             text-align: center;
             font-weight: 600;
-            height: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            min-width: 150px;
         }
         
         .today .day-header {
             background: var(--dark-blue);
         }
         
-        .lesson-time-header {
-            background: #e9ecef;
-            height: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-bottom: 1px solid #dee2e6;
-            font-weight: 600;
-        }
-        
-        .lesson-time-cell {
-            height: 100px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-bottom: 1px solid #dee2e6;
-            background: #f8f9fa;
-        }
-        
         .lesson-card {
             border: 1px solid #e9ecef;
             border-radius: 8px;
-            padding: 10px;
-            margin: 4px;
-            background: white;
-            transition: all 0.3s ease;
-            height: 92px;
-            overflow: hidden;
-        }
-        
-        .lesson-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            padding: 8px;
+            margin: 2px;
+            background: #f8f9fa;
+            font-size: 0.8rem;
+            min-height: 70px;
         }
         
         .lesson-time {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #6c757d;
             font-weight: 600;
         }
@@ -241,29 +213,23 @@ function getLessonTime($number) {
         .lesson-subject {
             font-weight: 600;
             color: #2c3e50;
-            margin: 2px 0;
+            margin: 3px 0;
             font-size: 0.85rem;
-            line-height: 1.2;
         }
         
         .lesson-info {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             color: #6c757d;
-            line-height: 1.2;
         }
         
         .empty-lesson {
             border: 2px dashed #dee2e6;
             background: transparent;
-            color: #6c757d;
-            text-align: center;
-            padding: 10px;
-            height: 92px;
+            height: 70px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 4px;
-            border-radius: 8px;
+            color: #6c757d;
         }
         
         .week-navigation {
@@ -283,28 +249,40 @@ function getLessonTime($number) {
             font-weight: 600;
         }
         
-        .schedule-grid {
-            display: flex;
-            min-height: 680px;
+        .pending-badge {
+            background: #dc3545;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
         
         .time-column {
-            flex: 0 0 80px;
             background: #f8f9fa;
+            min-width: 100px;
         }
         
-        .days-container {
-            flex: 1;
-            display: flex;
+        .break-row {
+            background: #fff3cd;
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 2px;
+            border-bottom: 1px solid #dee2e6;
         }
         
-        .day-cell {
-            flex: 1;
-            border-right: 1px solid #dee2e6;
+        .schedule-table {
+            min-width: 1200px;
         }
         
-        .day-cell:last-child {
-            border-right: none;
+        .subgroup-badge {
+            font-size: 0.6rem;
+            padding: 1px 4px;
+            margin-top: 2px;
+        }
+        
+        .pending-alert {
+            border-left: 4px solid #dc3545;
         }
     </style>
 </head>
@@ -330,140 +308,165 @@ function getLessonTime($number) {
                     <i class="bi bi-<?= $user['role'] == 'student' ? 'person' : 'person-badge' ?>"></i>
                 </div>
                 <h3><?= $user['fullname'] ?></h3>
-                <div class="role-badge d-inline-block mt-2">
-                    <?= $user['role'] == 'student' ? 'Ученик' : 'Учитель' ?>
-                    <?php if ($user['role'] == 'student'): ?>
-                        • <?= $user['class_info'] ?> класс
-                    <?php else: ?>
-                        • <?= $user['subject'] ?>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-
-        <!-- Навигация по неделям -->
-        <div class="week-navigation">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h5 class="mb-0">
-                        <i class="bi bi-calendar-week"></i>
-                        Расписание на неделю
-                    </h5>
-                </div>
-                <div class="col-md-6 text-end">
-                    <div class="btn-group">
-                        <a href="?week=<?= $current_week - 1 ?>&year=<?= $current_year ?>" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-chevron-left"></i> Предыдущая
-                        </a>
-                        <span class="btn btn-primary btn-sm">
-                            <?= date('d.m.Y', strtotime($week_dates[0])) ?> - <?= date('d.m.Y', strtotime($week_dates[5])) ?>
+                <div class="d-inline-block mt-2">
+                    <?php if ($user['role'] == 'teacher' && !$user['is_approved']): ?>
+                        <span class="pending-badge">
+                            <i class="bi bi-clock"></i> Ожидает подтверждения
                         </span>
-                        <a href="?week=<?= $current_week + 1 ?>&year=<?= $current_year ?>" class="btn btn-outline-primary btn-sm">
-                            Следующая <i class="bi bi-chevron-right"></i>
-                        </a>
-                    </div>
+                    <?php else: ?>
+                        <span class="role-badge">
+                            <?= $user['role'] == 'student' ? 'Студент' : 'Преподаватель' ?>
+                            <?php if ($user['role'] == 'student' && isset($user['faculty_name'])): ?>
+                                • <?= $user['faculty_name'] ?><?= $user['group_letter'] ? ' (' . $user['group_letter'] . ')' : '' ?>
+                            <?php endif; ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
+                <?php if ($user['role'] == 'student' && isset($user['faculty_full_name'])): ?>
+                    <p class="mt-2 mb-0"><?= $user['faculty_full_name'] ?></p>
+                <?php endif; ?>
             </div>
         </div>
 
-        <!-- Расписание -->
-        <div class="schedule-container">
-            <div class="schedule-header">
-                <h6 class="mb-0 text-center">
-                    <?php if ($user['role'] == 'student'): ?>
-                        Расписание для <?= $user['class_info'] ?> класса
-                    <?php else: ?>
-                        Мои уроки (<?= $user['subject'] ?>)
-                    <?php endif; ?>
-                </h6>
+        <!-- Уведомление о неподтвержденном аккаунте -->
+        <?php if ($user['role'] == 'teacher' && !$user['is_approved']): ?>
+            <div class="alert alert-danger pending-alert">
+                <h5><i class="bi bi-exclamation-triangle"></i> Аккаунт ожидает подтверждения</h5>
+                <p class="mb-0">
+                    Ваш аккаунт еще не подтвержден администратором. После подтверждения вы сможете просматривать свое расписание.
+                    Обратитесь к администратору для активации вашего аккаунта.
+                </p>
             </div>
-            
-            <div class="schedule-grid">
-                <!-- Колонка с временами -->
-                <div class="time-column">
-                    <div class="lesson-time-header">
-                        <small>Урок</small>
-                        <small>Время</small>
+        <?php else: ?>
+            <!-- Навигация по неделям -->
+            <div class="week-navigation">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">
+                            <i class="bi bi-calendar-week"></i>
+                            Расписание на неделю
+                        </h5>
                     </div>
-                    <?php for($i = 1; $i <= 8; $i++): ?>
-                        <div class="lesson-time-cell">
-                            <small class="fw-bold"><?= $i ?></small>
-                            <small><?= getLessonTime($i) ?></small>
+                    <div class="col-md-6 text-end">
+                        <div class="btn-group">
+                            <a href="?week=<?= $current_week - 1 ?>&year=<?= $current_year ?>" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-chevron-left"></i> Предыдущая
+                            </a>
+                            <span class="btn btn-primary btn-sm">
+                                <?= date('d.m.Y', strtotime($week_dates[0])) ?> - <?= date('d.m.Y', strtotime($week_dates[5])) ?>
+                            </span>
+                            <a href="?week=<?= $current_week + 1 ?>&year=<?= $current_year ?>" class="btn btn-outline-primary btn-sm">
+                                Следующая <i class="bi bi-chevron-right"></i>
+                            </a>
                         </div>
-                    <?php endfor; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Расписание -->
+            <div class="schedule-container">
+                <div class="schedule-header">
+                    <h6 class="mb-0 text-center">
+                        <?php if ($user['role'] == 'student'): ?>
+                            Расписание для группы <?= $user['faculty_name'] ?><?= $user['group_letter'] ? ' (' . $user['group_letter'] . ')' : '' ?>
+                        <?php else: ?>
+                            Мои уроки
+                        <?php endif; ?>
+                    </h6>
                 </div>
                 
-                <!-- Дни недели -->
-                <div class="days-container">
-                    <?php foreach($week_dates as $date): ?>
-                        <?php 
-                        $is_today = $date == date('Y-m-d');
-                        $day_schedule = $schedule_data[$date] ?? [];
-                        ?>
-                        <div class="day-cell <?= $is_today ? 'today' : '' ?>">
-                            <div class="day-header">
-                                <div><?= getShortDayName($date) ?></div>
-                                <div><?= date('d.m', strtotime($date)) ?></div>
-                            </div>
-                            
-                            <?php for($lesson_num = 1; $lesson_num <= 8; $lesson_num++): ?>
-                                <?php
-                                $lesson = null;
-                                foreach($day_schedule as $l) {
-                                    if ($l['lesson_number'] == $lesson_num) {
-                                        $lesson = $l;
-                                        break;
-                                    }
-                                }
-                                ?>
+                <div class="schedule-table">
+                    <table class="table table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th class="time-column text-center">Урок</th>
+                                <?php foreach($week_dates as $date): ?>
+                                    <th class="day-header <?= $date == date('Y-m-d') ? 'today' : '' ?>">
+                                        <?= getShortDayName($date) ?><br>
+                                        <?= date('d.m', strtotime($date)) ?>
+                                    </th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php for($lesson_num = 1; $lesson_num <= 12; $lesson_num++): ?>
+                                <?php if ($lesson_num == 5): ?>
+                                    <tr class="break-row">
+                                        <td colspan="7">Обед 11:45-12:25</td>
+                                    </tr>
+                                <?php elseif ($lesson_num == 9): ?>
+                                    <tr class="break-row">
+                                        <td colspan="7">Обед 15:40-16:05</td>
+                                    </tr>
+                                <?php endif; ?>
                                 
-                                <div class="p-1" style="height: 100px;">
-                                    <?php if ($lesson): ?>
-                                        <div class="lesson-card">
-                                            <div class="lesson-subject"><?= $lesson['subject'] ?></div>
-                                            <?php if ($user['role'] == 'student'): ?>
-                                                <div class="lesson-info"><?= $lesson['teacher_name'] ?></div>
+                                <tr>
+                                    <td class="time-column text-center">
+                                        <small class="fw-bold"><?= $lesson_num ?></small><br>
+                                        <small class="lesson-time"><?= getLessonTime($lesson_num) ?></small>
+                                    </td>
+                                    
+                                    <?php foreach($week_dates as $date): ?>
+                                        <td style="min-width: 150px; vertical-align: top;">
+                                            <?php
+                                            $lessons = array_filter($schedule_data[$date] ?? [], function($l) use ($lesson_num) {
+                                                return $l['lesson_number'] == $lesson_num;
+                                            });
+                                            ?>
+                                            
+                                            <?php if (count($lessons) > 0): ?>
+                                                <?php foreach($lessons as $lesson): ?>
+                                                    <div class="lesson-card">
+                                                        <div class="lesson-subject"><?= $lesson['subject'] ?></div>
+                                                        <?php if ($user['role'] == 'student'): ?>
+                                                            <div class="lesson-info"><?= $lesson['teacher_name'] ?></div>
+                                                        <?php else: ?>
+                                                            <div class="lesson-info"><?= $lesson['faculty_name'] ?></div>
+                                                        <?php endif; ?>
+                                                        <div class="lesson-info">Каб. <?= $lesson['classroom'] ?></div>
+                                                        <?php if ($lesson['subgroup'] > 0): ?>
+                                                            <span class="badge bg-secondary subgroup-badge">Подгр. <?= $lesson['subgroup'] ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php endforeach; ?>
                                             <?php else: ?>
-                                                <div class="lesson-info"><?= $lesson['class_info'] ?> кл.</div>
+                                                <div class="empty-lesson">
+                                                    <small>—</small>
+                                                </div>
                                             <?php endif; ?>
-                                            <div class="lesson-info">Каб. <?= $lesson['classroom'] ?></div>
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="empty-lesson">
-                                            <small>—</small>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
+                                        </td>
+                                    <?php endforeach; ?>
+                                </tr>
                             <?php endfor; ?>
-                        </div>
-                    <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
 
-        <!-- Статистика -->
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h3 class="text-primary">
-                            <?= array_sum(array_map('count', $schedule_data)) ?>
-                        </h3>
-                        <p class="text-muted mb-0">Уроков на неделю</p>
+            <!-- Статистика -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary">
+                                <?= array_sum(array_map('count', $schedule_data)) ?>
+                            </h3>
+                            <p class="text-muted mb-0">Уроков на неделю</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-success">
+                                <?= count(array_filter($schedule_data[date('Y-m-d')] ?? [])) ?>
+                            </h3>
+                            <p class="text-muted mb-0">Уроков сегодня</p>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h3 class="text-success">
-                            <?= count(array_filter($schedule_data[date('Y-m-d')] ?? [])) ?>
-                        </h3>
-                        <p class="text-muted mb-0">Уроков сегодня</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <?php endif; ?>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
