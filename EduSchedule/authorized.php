@@ -284,6 +284,8 @@ $week_dates = getWeekDates($current_year, $current_week);
         .pending-alert {
             border-left: 4px solid #dc3545;
         }
+                .day-header  {color:black;}
+        .today {color: #3498db;}
     </style>
 </head>
 <body>

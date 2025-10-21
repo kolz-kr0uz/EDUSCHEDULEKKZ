@@ -269,7 +269,7 @@ if ($selected_faculty) {
         $stmt->close();
     }
 }
-?>
+?>  
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -293,6 +293,8 @@ if ($selected_faculty) {
         .schedule-table { min-width: 1200px; }
         .teacher-card { border-left: 4px solid #ffc107; }
         .teacher-card.approved { border-left-color: #28a745; }
+        .day-header  {color:black;}
+        .today {color: #3498db;}
     </style>
 </head>
 <body>
