@@ -82,6 +82,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['room'])) {
     }
 }
 
+// Обработка добавления предмета
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sbjct'])) {
+    $sbjct = trim($_POST['sbjct']);
+
+    if (!empty($sbjct)) {
+        $stmt = $conn->prepare("INSERT INTO subjects (name) VALUES (?)");
+        $stmt->bind_param('s', $sbjct);
+        
+        if ($stmt->execute()) {
+            $_SESSION['success'] = "Предмет $sbjct успешно добавлена!";
+        } else {
+            $_SESSION['error'] = "Ошибка при добавлении группы: " . $conn->error;
+        }
+        $stmt->close();
+    }
+}
+
 // Обработка добавления/изменения расписания
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_schedule'])) {
     $date = $_POST['date'];
@@ -242,6 +259,9 @@ $pending_teachers = $conn->query("SELECT id, fullname, email, login, created_at 
 // Получаем список кабинетов
 $rooms = $conn->query("SELECT * FROM room");
 
+// Получаем список кабинетов
+$sbjcts = $conn->query("SELECT * FROM subjects");
+
 // Функции для работы с датами
 function getWeekDates($year, $week) {
     $dates = [];
@@ -396,6 +416,11 @@ if ($view_type == 'faculty' && $selected_faculty) {
                     <i class="bi bi-building"></i> Управление кабинетами
                 </button>
             </li>
+                         <li class="nav-item" role="presentation">
+                <button class="nav-link" id="subjects-tab" data-bs-toggle="tab" data-bs-target="#subjects" type="button" role="tab">
+                    <i class="bi bi-book"></i> Управление предметами
+                </button>
+            </li>           
         </ul>
 
         <div class="tab-content" id="adminTabsContent">
@@ -834,6 +859,53 @@ if ($view_type == 'faculty' && $selected_faculty) {
                     </div>
                 </div>
             </div>
+                        <div class="tab-pane fade" id="subjects" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Добавить новый предмет</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Название предмета</label>
+                                <input type="text" class="form-control" name="sbjct" placeholder="Например: Математика или Программирование" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-primary d-block">Добавить предмет</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Список существующих предметов -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Существующие предметы</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Название предмета</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                    $all_subjects = $conn->query("SELECT * FROM subjects ORDER BY name");
+                                    while($subject = $all_subjects->fetch_assoc()): ?>
+                                        <tr>
+                                            <td><strong><?= $subject['name'] ?></strong></td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -864,7 +936,14 @@ if ($view_type == 'faculty' && $selected_faculty) {
                         <div id="normalForm">
                             <div class="mb-3">
                                 <label class="form-label">Предмет</label>
-                                <input type="text" class="form-control" name="subject" placeholder="Например: Математика">
+                                    <select class="form-select" name="subject">
+                                    <option value="">Выберите предмет</option>
+                                    <?php 
+                                    $sbjcts->data_seek(0);
+                                    while($sbjct_item = $sbjcts->fetch_assoc()): ?>
+                                        <option value="<?= $sbjct_item['name'] ?>"><?= $sbjct_item['name'] ?></option>
+                                    <?php endwhile; ?>
+                                </select>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Преподаватель</label>
